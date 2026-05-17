@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { login, logout, me, validatePasswordStrength, googleCallback, googleFailure } = require('../controllers/authController');
+const { login, logout, me, validatePasswordStrength, googleCallback, googleFailure, googleTokenLogin } = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 const { loginLimiter } = require('../middleware/rateLimiter');
 const passport = require('../config/passport');
@@ -33,5 +33,8 @@ router.get('/google/callback',
 );
 
 router.get('/google/failure', googleFailure);
+
+// Google token verification from frontend popup
+router.post('/google-token', googleTokenLogin);
 
 module.exports = router;

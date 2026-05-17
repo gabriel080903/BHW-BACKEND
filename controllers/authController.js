@@ -186,3 +186,85 @@ exports.validatePasswordStrength = (req, res) => {
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+/**
+ * Google Token Verification
+ * Called from frontend after Google OAuth popup — verifies token,
+ * creates/finds user, handles pending approval flow
+ */
+exports.googleTokenLogin = async (req, res) => {
+  try {
+    const { accessToken, profile } = req.body || {}
+    if (!accessToken || !profile?.email) {
+      return res.status(400).json({ message: 'Missing token or profile' })
+    }
+
+    const email = profile.email.trim().toLowerCase()
+
+    // 1. Find existing user by googleId or email
+    let user = await User.findOne({ googleId: profile.sub })
+    if (!user) user = await User.findOne({ email })
+
+    if (user) {
+      // Existing user — check if pending approval
+      if (user.pendingApproval) {
+        return res.status(403).json({
+          message: 'pending_approval',
+          email: user.email,
+          displayName: user.displayName
+        })
+      }
+      if (!user.isActive) {
+        return res.status(403).json({ message: 'account_deactivated' })
+      }
+      // Update Google info if not set
+      if (!user.googleId) {
+        user.googleId = profile.sub
+        user.profilePicture = profile.picture
+        user.authProvider = 'google'
+      }
+      user.lastLogin = new Date()
+      await user.save()
+    } else {
+      // New Google user — create with pendingApproval = true
+      const username = email.split('@')[0].replace(/[^a-z0-9_]/gi, '_')
+      user = new User({
+        googleId:       profile.sub,
+        email,
+        username,
+        displayName:    profile.name || username,
+        profilePicture: profile.picture,
+        authProvider:   'google',
+        role:           'Parent/Guardian',
+        isActive:       false,
+        pendingApproval: true,
+        lastLogin:      new Date()
+      })
+      await user.save()
+      return res.status(403).json({
+        message: 'pending_approval',
+        email:   user.email,
+        displayName: user.displayName
+      })
+    }
+
+    const token = generateToken(buildTokenPayload(user))
+    res.cookie('authToken', token, COOKIE_OPTIONS)
+
+    return res.status(200).json({
+      message: 'Login successful',
+      token,
+      user: {
+        id:          String(user._id),
+        username:    user.username,
+        displayName: user.displayName,
+        role:        normalizeRole(user.role),
+        email:       user.email,
+        avatar:      user.profilePicture,
+        isActive:    user.isActive
+      }
+    })
+  } catch (err) {
+    console.error('Google token login error:', err)
+    return res.status(500).json({ message: 'Server error' })
+  }
+}
