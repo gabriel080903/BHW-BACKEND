@@ -1,0 +1,45 @@
+{
+  "name": "bhw_backend",
+  "version": "1.0.0",
+  "description": "Secure BHW Nutrition Tracker Backend with Authentication & Activity Logging",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "setup": "node scripts/setup.js",
+    "migrate:google-whitelist": "node scripts/migrateGoogleWhitelistToDb.js",
+    "backfill:resident-parent": "node scripts/backfillResidentParentUser.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "seed": "node scripts/seedUsers.js"
+  },
+  "keywords": [
+    "bhw",
+    "nutrition",
+    "tracker",
+    "barangay",
+    "health"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.3.1",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "multer": "^1.4.5-lts.1",
+    "mammoth": "^1.5.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
